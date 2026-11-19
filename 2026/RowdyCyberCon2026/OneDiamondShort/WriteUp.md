@@ -45,26 +45,32 @@ this block. Another thing I noticed was that there seemed to be no random world 
 you loaded the game, everything (from what I could see) spawned in the same place every playthrough. After all of this,
 I decided to get more info on the exe file so that I could start figuring out what tools would be compatible.
 I opened my Kali Linux VM on VMware Workstation and passed my OneDiamondShort.exe file to Detect It Easy. I saw that the
-file type was PE64 (Portable Executable for Windows 64-bit operating systems) 
+file type was PE64 (Portable Executable for Windows 64-bit operating systems).
 
 ![image](images/KaliPurpleDesktop.png)
 
 ![image](images/Detect-It-Easy.png)
 
-<details><summary>Disclaimer</summary>While most of these tools are cross-platform, x64dbg is only available 
+<details>
+
+
+<summary>Disclaimer</summary>
+
+While most of these tools are cross-platform, x64dbg is only available 
 on Windows and VMware Workstation Pro is only available on Windows and Linux. You don't have to use these specific 
 tools, these are just the ones I decided to use. If you're on Mac or Linux (natively speaking), you will be unable to run 
 this program as it is a 64-bit Windows Portable Executable (PE64). My team and I at Rowdy CyberCon found out the hard way
 that I could only run the program as I was on Windows and my teammates were on Mac. I'm aware that
 I didn't use the quickest or most efficient methods to approach this problem but that's not the goal of this write-up. 
 My goal was to explain how I approached a problem like this for the first time, explain my thought process
-and show the mistakes made along the way for future me and any reader who finds it useful.</details>
+and show the mistakes made along the way for future me and any reader who finds it useful.
+
+</details>
 
 
 
 # Solution
-With the exe being PE64, I decided to use Ghidra for static analysis and both x64dbg (debugger) and 
-Cheat Engine (live memory manipulation) for dynamic analysis. While in my Kali Linux VM, I loaded Ghidra,
+With the exe being PE64, I decided to use Ghidra for static analysis and Cheat Engine (live memory manipulation) for dynamic analysis. While in my Kali Linux VM, I loaded Ghidra,
 
 ![image](images/LoadGhidra.png)
 
@@ -92,7 +98,9 @@ included "Diamond", "Count", "RCC", "Win", and "Flag".
 
 ![image](images/RCCStringSearchSelectFirstOption.png)
 
-<details><summary>Why these strings?</summary>I did a string search of these 5 phrases which would bring up all the
+<details>
+
+<summary>Why these strings?</summary>I did a string search of these 5 phrases which would bring up all the
 instances that they show up in the program. With "Diamond", I wanted to see which statements and functions used that word
 which could give me a better layout of the program by showing me all the printf statements that could be executed based
 on which conditions were met, including their addresses. The diamond count display in the game was what set this
@@ -105,6 +113,8 @@ to the diamond count but actually led me to the function and portion of the code
 the flag to the game screen and the README once the win condition was met. If the flag was hardcoded in the program,
 it very likely would have been here. "Win" and "Flag" were the same idea as the last string as I hoped they
 could bring me closer to understanding how the logic of the win condition worked but nothing came from them.
+
+
 </details>
 
 
@@ -127,7 +137,7 @@ if (param_2[10] == 10)
 
 Looking at this condition, it seemed rather specific. We are checking for equality between an array element and 10.
 Could this element in the array be in charge of our diamond count in game? Matter of fact, the previous printf 
-statement I just listed lies within this if statement. Here's what I determined from this, this element must be the 
+statement I just listed lies within this if statement. Here's what I determined from this, this element might be the 
 value in charge of the diamond count. If I could somehow locate the memory address of this array and element at index
 10, I could maybe open Cheat Engine, locate that same address and change that value to 10 as the game was running. 
 With these 
@@ -152,12 +162,16 @@ While the game is running, I mine and get
 three diamonds, I then run a 
 scan for 4 byte values that hold the int 3.
 
-<details><summary>Why matches for 4 bytes aren't 100% foolproof</summary>
+<details>
+
+<summary>Why matches for 4 bytes aren't 100% foolproof</summary>
 
 Just because I did a scan for 4 bytes, doesn’t mean that specific memory 
 address holds a value of a variable that was declared as an int. It might be entirely possible that the value at 
 that memory address when read as 4 bytes just happens to be the same value I'm looking for, that is why we do 
-multiple scans which narrow down the potential results.</details>
+multiple scans which narrow down the potential results.
+
+</details>
 
 
 ![image](images/One.png)
@@ -184,7 +198,9 @@ Just enter the value "10", and press "OK".
 In my walkthrough, I decided not to freeze the values in the active column. In my case, I didn't need to but just know that 
 freezing the values is another step you can take if you want to ensure the value is picked up by the win check.
 
-<details><summary>Why would I freeze these values and how do I do that?</summary>
+<details>
+
+<summary>Why would I freeze these values and how do I do that?</summary>
 
 We freeze the address because the game is continuously checking and rewriting the value each frame. You can see
 this if you set the value to 10 without freezing first. In some cases, it immediately snaps back to the real count before 
@@ -196,7 +212,9 @@ if the win check happens to read your value before the game resets it. Because o
 freezing as it will ensure that the new value remains long enough to be checked.
 
 To freeze the values, you want to double-click on the checkbox to
-the far left of the address. There should now be either an x or a checkmark in the checkbox.</details>
+the far left of the address. There should now be either an x or a checkmark in the checkbox.
+
+</details>
 
 Now look at the running exe file, there are two potential outcomes that could happen once you've changed the value. Either (a) you changed the 
 value to 10, you check the running game and see the flag is printed to the game screen, or (b) nothing happens. If it's
@@ -216,7 +234,9 @@ Engine once again until the flag is printed to the game screen.
 **These are all the problems I ran into and things I learned during the process of trying to get the flag.**
 
 Manipulating the diamond count printed to the screen. Would immediately snap back to the **Actual** diamond count.
-<details><summary>Explanation</summary>
+<details>
+
+<summary>Explanation</summary>
 
 I think this is what led me to believe that I couldn't change the actual diamond count value which led me to 
 look for alternative methods to get the flag. I tried doing the Cheat Engine 4-byte value changes to 10 like I did 
@@ -234,7 +254,9 @@ saying it couldn't be useful in this case, I just wasn't sure how to use it or a
 </details>
 
 Flipping too many ZF values of multiple conditions when I only needed to flip the ZF value one condition.
-<details><summary>Explanation</summary>
+<details>
+
+<summary>Explanation</summary>
 
 This is part of my original solution to this CTF which is not a part of the write-up. For my original solution, I 
 ended up attempting to bypass the win conditions by using control flow manipulation by flipping the ZF flags after
@@ -261,6 +283,15 @@ on a CTF, you want to put your time towards actually progressing and not fixing 
 
 
 # FLAG
-<details><summary>Press to view the flag</summary>RCC{M7N3C4F8Q2D6R9K5}</details>
+
+<details>
+
+<summary>Press to view the flag</summary>
+
+RCC{M7N3C4F8Q2D6R9K5}
+
+</details>
+
+
 
 The end ... FOR NOW
